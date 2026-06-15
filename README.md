@@ -1,42 +1,47 @@
-Skyline Weather 
-A sleek, weather application built for speed and clarity. Skyline Weather provides real-time weather data with a highly customizable interface, allowing users to track multiple locations seamlessly.
+Skyline Weather
+A high-performance, weather application designed for speed, clarity, and seamless user experience.
 
-Features
-Location Detection: Automatically requests your current location upon first launch to set a local default.
+Project Overview
+Skyline Weather provides real-time meteorological data with a highly customizable interface. Users can track multiple locations, preview weather conditions before saving, and tailor the application's visual style to their preferences.
 
-Preview System: Search for any city to see a live preview of the weather before adding it to your permanent dashboard.
+Core Features
 
-Highly Customizable UI
+Location Management
+Automatic Detection: The application prompts for location access on the first launch to set an immediate default.
 
-Shapes: Choose between Fluent (modern rounded), Classic (sharp edges), or Soft (pill-shaped) layouts.
+Preview System: Search for any city to see a live weather snapshot before committing it to your saved dashboard.
 
-Themes: Switch between "Deep Space Dark" and "Clean Light" modes.
+Persistent Storage: Saved locations, UI preferences, and unit settings are automatically synchronized with your browser's local storage.
 
-Accents: Personalize the app with five distinct vibrant accent color profiles.
+Interface Customization
+Layout Modes: Toggle between Fluent (modern rounded), Classic (sharp geometry), and Soft (pill-shaped) design styles.
 
-Responsive Design: Optimized for desktop and mobile browsing.
+Theme Options: Choose between "Deep Space Dark" and "Clean Light" color schemes.
 
-Minimalist Aesthetic: Clean iconography and fluid animations powered by Lucide and custom CSS.
+Accent Mapping: Select from five distinct professional accent color profiles to personalize the interface.
 
-Tech Stack
-Frontend: HTML5, CSS3 (Modern Flex/Grid, Custom Properties), Vanilla JavaScript.
+Units System: Seamlessly switch between Fahrenheit and Celsius data formats.
 
-Weather Data: Open-Meteo API (No API key required).
+Technical Stack
+Core: HTML5, CSS3 (Modern Flex/Grid, Custom Properties), and Vanilla JavaScript.
 
-Icons: Lucide.
+Weather Data: Powered by the Open-Meteo API.
 
-Deployment: Optimized for Vercel.
+Iconography: Lucide vector icons.
 
-📝 Usage
-Search: Type a city name into the sidebar input and press Enter to preview its weather.
+Performance: Lightweight, zero-dependency architecture optimized for rapid loading.
 
-Add Location: Click the "Add to Dashboard" button in the top banner to save the previewed city to your sidebar.
+Application Usage
+Dashboard Navigation
+Search: Use the sidebar input field to find a city and press Enter to view the preview.
 
-Settings: Click the Settings icon in the top right to customize your interface theme and units.
+Save Location: Click the "Add to Dashboard" button in the preview banner to permanently add a city to your sidebar list.
 
-Info: Click the Info icon to see project details.
+Preferences: Access the Settings panel via the gear icon in the top right to adjust themes, layouts, or units.
 
-💎 Built By
-This application was architected and implemented by Gemini.
+Information: View project details by clicking the Info icon located in the sidebar header.
 
-Created as a lightweight, performant weather solution.
+Credits
+This project was designed and implemented by Gemini.
+
+Developed as a high-performance, lightweight web application.
