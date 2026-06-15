@@ -5,51 +5,298 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Skyline Weather</title>
     
-    <!-- Minimal SVG Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2v2'/><path d='m4.93 4.93 1.41 1.41'/><path d='M20 12h2'/><path d='m19.07 4.93-1.41 1.41'/><path d='M15.947 12.65a4 4 0 0 0-5.925-4.128'/><path d='M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z'/></svg>">
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
+        /* Base Themes Properties */
         :root {
+            /* Dark Mode Defaults */
             --bg-base: #0f172a;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
             --sidebar-bg: rgba(15, 23, 42, 0.6);
             --panel-bg: rgba(30, 41, 59, 0.6);
             --panel-border: rgba(255, 255, 255, 0.08);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --accent: #38bdf8;
+            --danger: #ef4444;
+            --sidebar-width: 320px;
+            
+            /* Accent Colors Configs */
+            --accent-raw: 56, 189, 248;
+            --accent: rgb(var(--accent-raw));
+            --accent-tint: rgba(var(--accent-raw), 0.12);
+            --accent-hover: rgba(var(--accent-raw), 0.2);
+
+            /* Default Fluent Shapes */
             --radius-lg: 24px;
             --radius-md: 16px;
+            --radius-sm: 12px;
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            --border-width: 1px;
+            
+            /* Animation Curves */
+            --spring: cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            --smooth: cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg-base); color: var(--text-main); min-height: 100vh; display: flex; overflow: hidden; }
-        .app-container { display: flex; width: 100%; height: 100vh; }
+        /* Light Mode Overrides */
+        [data-theme="light"] {
+            --bg-base: #f1f5f9;
+            --bg-gradient: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            --sidebar-bg: rgba(255, 255, 255, 0.6);
+            --panel-bg: rgba(255, 255, 255, 0.7);
+            --panel-border: rgba(0, 0, 0, 0.08);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        }
+
+        /* UI Architecture Themes */
         
-        /* Sidebar */
-        .sidebar { width: 320px; background: var(--sidebar-bg); backdrop-filter: blur(20px); border-right: 1px solid var(--panel-border); padding: 2rem; display: flex; flex-direction: column; }
+        /* 1. Classic (Windows 10/Metro Style) */
+        [data-ui-theme="classic"] {
+            --radius-lg: 0px;
+            --radius-md: 0px;
+            --radius-sm: 0px;
+            --card-shadow: none;
+            --accent-tint: rgba(var(--accent-raw), 0.04); 
+            --accent-hover: rgba(var(--accent-raw), 0.08);
+            --spring: cubic-bezier(0.0, 0.0, 0.2, 1); 
+        }
+
+        /* 2. Soft / Pill */
+        [data-ui-theme="soft"] {
+            --radius-lg: 40px;
+            --radius-md: 24px;
+            --radius-sm: 100px;
+            --border-width: 0px;
+            --card-shadow: 0 10px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        /* Accent Intensity Variations */
+        [data-accent-style="minimal"] {
+            --full-tint: transparent;
+            --panel-tint: var(--panel-bg);
+        }
+        [data-accent-style="full"] {
+            --full-tint: rgba(var(--accent-raw), 0.03);
+            --panel-tint: linear-gradient(rgba(var(--accent-raw), 0.08), rgba(var(--accent-raw), 0.08)), var(--panel-bg);
+        }
+
+        /* Global Reset & Transitions */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+        body {
+            background: var(--bg-gradient); background-color: var(--bg-base); color: var(--text-main);
+            min-height: 100vh; display: flex; overflow: hidden; transition: background 0.6s var(--smooth), color 0.6s var(--smooth);
+        }
+        body::before {
+            content: ''; position: absolute; inset: 0; background: var(--full-tint);
+            pointer-events: none; z-index: 1; transition: background 0.6s var(--smooth);
+        }
+        .app-container { display: flex; width: 100%; height: 100vh; position: relative; z-index: 2; }
+
+        /* Fluid Animated Sidebar */
+        .sidebar {
+            width: var(--sidebar-width); background: var(--sidebar-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-right: var(--border-width) solid var(--panel-border); display: flex; flex-direction: column;
+            padding: 2rem 1.5rem; z-index: 10; transition: all 0.4s var(--smooth);
+        }
+
         .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-        .settings-toggle-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--panel-border); color: var(--text-main); padding: 0.5rem; border-radius: 8px; cursor: pointer; display: flex; }
-        /* Removed Tilt/Transform on hover */
-        .settings-toggle-btn:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--accent); }
+        .logo { display: flex; align-items: center; gap: 0.75rem; font-size: 1.4rem; font-weight: 700; color: var(--text-main); }
+        .logo i { color: var(--accent); transition: color 0.4s var(--smooth); }
+
+        .btn-group { display: flex; gap: 0.5rem; }
+        .settings-toggle-btn {
+            background: rgba(255, 255, 255, 0.05); border: var(--border-width) solid var(--panel-border);
+            color: var(--text-main); padding: 0.5rem; border-radius: var(--radius-sm);
+            cursor: pointer; display: flex; transition: all 0.2s var(--smooth);
+        }
+        .settings-toggle-btn:hover { background: var(--accent-hover); border-color: var(--accent); transform: scale(1.05); } /* Removed Tilt */
 
         .search-box { position: relative; margin-bottom: 1.5rem; }
-        .search-box input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--panel-border); border-radius: 12px; color: white; }
+        .search-box input {
+            width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; background: rgba(255, 255, 255, 0.05);
+            border: var(--border-width) solid var(--panel-border); border-radius: var(--radius-sm);
+            color: var(--text-main); font-size: 0.95rem; outline: none; transition: all 0.3s var(--smooth);
+        }
+        .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-raw), 0.15); transform: translateY(-2px); }
+        .search-box i {
+            position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%);
+            color: var(--text-muted); width: 18px; height: 18px; transition: color 0.3s var(--smooth);
+        }
+        .search-box input:focus + i { color: var(--accent); }
+
+        /* Animated List Items */
+        .city-list { flex: 1; overflow-y: auto; list-style: none; display: flex; flex-direction: column; gap: 0.75rem; padding-right: 4px; }
+        .city-list::-webkit-scrollbar { width: 4px; }
+        .city-list::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: var(--radius-sm); }
+
+        .city-item {
+            background: rgba(255, 255, 255, 0.03); border: var(--border-width) solid var(--panel-border);
+            padding: 1rem; border-radius: var(--radius-md); cursor: pointer; display: flex;
+            justify-content: space-between; align-items: center; transition: all 0.3s var(--spring);
+            animation: slideInLeft 0.4s var(--spring) backwards;
+        }
+
+        [data-ui-theme="fluent"] .city-item:hover, [data-ui-theme="soft"] .city-item:hover {
+            transform: translateY(-3px) scale(1.02); border-color: rgba(var(--accent-raw), 0.5); box-shadow: var(--card-shadow);
+        }
+        [data-ui-theme="classic"] .city-item:hover { transform: translateX(4px); background: var(--accent-hover); }
+
+        .city-item.active { background: var(--accent-tint); border-color: var(--accent); border-left-width: 4px; }
+        [data-accent-style="minimal"] .city-item.active { border-left-width: 4px; border-bottom-width: var(--border-width); }
+
+        .city-info h4 { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .city-info p { font-size: 0.8rem; color: var(--text-muted); transition: color 0.3s; }
+
+        .city-item .delete-btn {
+            background: transparent; border: none; color: var(--text-muted); cursor: pointer;
+            padding: 6px; border-radius: var(--radius-sm); opacity: 0; transform: scale(0.8); transition: all 0.2s var(--spring);
+        }
+        .city-item:hover .delete-btn { opacity: 1; transform: scale(1); }
+        .city-item .delete-btn:hover { color: var(--danger); background: rgba(239, 68, 68, 0.15); transform: scale(1.1) rotate(5deg); }
+
+        /* Main Content Fluid Panes */
+        .main-content { flex: 1; padding: 2rem 3rem; overflow-y: auto; display: flex; flex-direction: column; justify-content: center; position: relative; }
+        .view-pane { display: none; max-width: 1000px; width: 100%; margin: 0 auto; }
+        .view-pane.active-pane { display: block; animation: paneEnter 0.6s var(--spring) forwards; }
+
+        @keyframes paneEnter { from { opacity: 0; transform: translateY(30px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        /* Preview Banner */
+        .preview-banner {
+            display: none; background: rgba(var(--accent-raw), 0.15); border: 1px solid var(--accent);
+            border-radius: var(--radius-md); padding: 1rem 1.5rem; margin-bottom: 2.5rem;
+            align-items: center; justify-content: space-between; animation: slideDown 0.4s var(--spring);
+        }
+        .preview-banner div { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--accent); }
+        .preview-banner button {
+            background: var(--accent); color: #fff; border: none; padding: 0.6rem 1.2rem;
+            border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; display: flex;
+            align-items: center; gap: 0.5rem; transition: all 0.2s;
+        }
+        .preview-banner button:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(var(--accent-raw), 0.3); }
+
+        /* Dashboard Elements */
+        .hero-weather { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; }
+        .location-meta h1 { font-size: 3rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.03em; border-bottom: 2px solid transparent; transition: color 0.3s; }
+        [data-accent-style="minimal"] .location-meta h1 { border-bottom: 3px solid var(--accent); display: inline-block; }
+        .temp-display { display: flex; align-items: center; gap: 2rem; }
+        .weather-large-icon i { width: 110px; height: 110px; color: var(--accent); animation: float 6s ease-in-out infinite; }
+        .current-temp { font-size: 6rem; font-weight: 300; position: relative; line-height: 1; letter-spacing: -0.05em; }
+        .current-temp span { font-size: 2.5rem; position: absolute; top: 0.5rem; }
+
+        /* Metrics Cards */
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
+        .metric-card {
+            background: var(--panel-tint); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: var(--border-width) solid var(--panel-border); padding: 1.5rem; border-radius: var(--radius-lg);
+            display: flex; align-items: center; gap: 1.25rem; box-shadow: var(--card-shadow); transition: all 0.4s var(--spring);
+        }
+        [data-ui-theme="fluent"] .metric-card:hover, [data-ui-theme="soft"] .metric-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+        .metric-icon { background: rgba(255, 255, 255, 0.05); padding: 0.85rem; border-radius: var(--radius-md); color: var(--accent); display: flex; }
+
+        /* Forecast Staggered Strip */
+        .forecast-section h2 { font-size: 1.25rem; margin-bottom: 1.2rem; transition: color 0.3s; }
+        .forecast-container { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; }
+        .forecast-card {
+            flex: 1; min-width: 120px; background: var(--panel-tint); border: var(--border-width) solid var(--panel-border);
+            border-radius: var(--radius-md); padding: 1.25rem 1rem; text-align: center; display: flex; flex-direction: column;
+            align-items: center; gap: 0.75rem; box-shadow: var(--card-shadow); opacity: 0;
+            animation: staggerSlideUp 0.5s var(--spring) forwards; transition: all 0.3s var(--spring);
+        }
+        .forecast-card i { color: var(--accent); width: 36px; height: 36px; }
+        .forecast-card:hover { transform: scale(1.05) translateY(-5px); border-color: var(--accent); }
+
+        /* Settings Matrix */
+        .settings-card {
+            background: var(--panel-tint); border: var(--border-width) solid var(--panel-border);
+            border-radius: var(--radius-lg); padding: 2.5rem; max-width: 600px; margin: 0 auto; box-shadow: var(--card-shadow);
+        }
+        .settings-card h2 { margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem; font-size: 1.75rem; }
+        .settings-card h2 i { color: var(--accent); animation: spinSlow 10s linear infinite; }
+        .setting-group { margin-bottom: 1.75rem; padding-bottom: 1.75rem; border-bottom: 1px solid var(--panel-border); }
+        .setting-group:last-child { border: none; margin: 0; padding: 0; }
+        .setting-group label { display: block; font-weight: 600; margin-bottom: 0.75rem; font-size: 0.95rem; }
+
+        /* Fluid Segmented Control */
+        .segmented-control {
+            display: flex; background: rgba(0, 0, 0, 0.15); padding: 6px; border-radius: var(--radius-md);
+            border: var(--border-width) solid var(--panel-border); position: relative;
+        }
+        [data-theme="light"] .segmented-control { background: rgba(0, 0, 0, 0.05); }
+        .segmented-control button {
+            flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; font-size: 0.9rem;
+            transition: all 0.3s var(--smooth); z-index: 2; position: relative;
+        }
+        .segmented-control button.active { color: #fff; background: var(--accent); box-shadow: 0 4px 12px rgba(var(--accent-raw), 0.3); }
+        [data-ui-theme="classic"] .segmented-control button.active { box-shadow: none; border-radius: 0; }
+
+        /* Color Matrix Row */
+        .color-palette { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .color-swatch {
+            width: 42px; height: 42px; border-radius: var(--radius-sm); border: 3px solid transparent; cursor: pointer; transition: all 0.3s var(--spring);
+        }
+        [data-ui-theme="soft"] .color-swatch { border-radius: 50%; }
+        [data-ui-theme="classic"] .color-swatch { border-radius: 0; }
+        .color-swatch:hover { transform: scale(1.15) translateY(-2px); }
+        .color-swatch.active { border-color: var(--text-main); transform: scale(1.1); box-shadow: 0 0 20px rgba(var(--accent-raw), 0.4); }
+
+        /* Loading, Empty States & Modals */
+        .empty-state { text-align: center; max-width: 400px; margin: auto; }
+        .empty-state i { width: 72px; height: 72px; color: var(--accent); margin-bottom: 1.5rem; animation: float 4s ease-in-out infinite; }
         
-        /* Forecast with invisible scrollbar */
-        .forecast-container { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; width: 100%; }
-        .forecast-container::-webkit-scrollbar { display: none; }
-        .forecast-container { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .forecast-card { min-width: 120px; background: var(--panel-bg); border: 1px solid var(--panel-border); padding: 1.25rem 1rem; border-radius: var(--radius-md); text-align: center; }
-        
-        .main-content { flex: 1; padding: 3rem; overflow-y: auto; }
-        .preview-banner { display: none; padding: 1rem; background: var(--accent); color: #000; border-radius: 12px; margin-bottom: 2rem; justify-content: space-between; align-items: center; }
-        
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 100; }
-        .modal-content { background: var(--panel-bg); padding: 2rem; border-radius: var(--radius-lg); border: 1px solid var(--panel-border); text-align: center; max-width: 360px; }
+        .loader {
+            display: none; border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--accent);
+            border-radius: 50%; width: 48px; height: 48px; animation: spin 1s var(--smooth) infinite;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 50;
+        }
+
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 100;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .modal-overlay.show { display: flex; opacity: 1; }
+        .modal-content {
+            background: var(--panel-tint); border: var(--border-width) solid var(--panel-border);
+            padding: 2rem; border-radius: var(--radius-lg); text-align: center;
+            box-shadow: var(--card-shadow); max-width: 360px; width: 90%;
+            transform: translateY(20px); transition: transform 0.3s var(--spring);
+        }
+        .modal-overlay.show .modal-content { transform: translateY(0); }
+        .modal-content h3 { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; color: var(--accent); font-size: 1.4rem; }
+        .modal-content p { color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5; font-size: 0.95rem; }
+        .modal-content button {
+            background: var(--accent); color: white; border: none; padding: 0.75rem 2rem;
+            border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; transition: transform 0.2s; width: 100%;
+        }
+        .modal-content button:hover { transform: scale(1.02); }
+
+        /* Fluid Keyframes */
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        @keyframes spin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes spinSlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes staggerSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 850px) {
+            .app-container { flex-direction: column; overflow-y: auto; }
+            .sidebar { width: 100%; border-right: none; border-bottom: var(--border-width) solid var(--panel-border); }
+            .main-content { padding: 2rem 1.5rem; }
+            body { overflow: auto; }
+            .hero-weather { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+            .current-temp { font-size: 4.5rem; }
+            .weather-large-icon i { width: 80px; height: 80px; }
+        }
     </style>
 </head>
 <body>
@@ -57,79 +304,522 @@
     <div class="app-container">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h2>Skyline</h2>
-                <div style="display:flex; gap:0.5rem;">
-                    <button class="settings-toggle-btn" id="infoToggleBtn"><i data-lucide="info"></i></button>
-                    <button class="settings-toggle-btn" id="settingsToggleBtn"><i data-lucide="settings"></i></button>
+                <div class="logo">
+                    <i data-lucide="cloud-lightning"></i>
+                    <span>Skyline</span>
+                </div>
+                <div class="btn-group">
+                    <button class="settings-toggle-btn" id="infoToggleBtn" title="About">
+                        <i data-lucide="info" style="width: 20px; height: 20px;"></i>
+                    </button>
+                    <button class="settings-toggle-btn" id="settingsToggleBtn" title="Toggle Dashboard Settings">
+                        <i data-lucide="settings" style="width: 20px; height: 20px;"></i>
+                    </button>
                 </div>
             </div>
+            
             <div class="search-box">
-                <i data-lucide="search" style="position:absolute; left:10px; top:12px; color:var(--text-muted);"></i>
-                <input type="text" id="cityInput" placeholder="Search city...">
+                <i data-lucide="search"></i>
+                <input type="text" id="cityInput" placeholder="Search city & press enter...">
             </div>
-            <ul id="cityList" style="list-style:none;"></ul>
+
+            <ul class="city-list" id="cityList"></ul>
         </aside>
 
         <main class="main-content">
-            <div id="previewBanner" class="preview-banner">
-                <span>Previewing Location</span>
-                <button id="addPreviewBtn" style="padding:0.5rem 1rem; border-radius:8px; border:none; cursor:pointer;">Add to Dashboard</button>
+            <div id="loader" class="loader"></div>
+
+            <div id="emptyStatePane" class="view-pane empty-state">
+                <i data-lucide="map"></i>
+                <h2>No Locations Found</h2>
+                <p>Search for a city using the input field on the left, or allow location access.</p>
             </div>
-            <h1 id="cityName">Searching for location...</h1>
-            <div style="margin: 2rem 0;">
-                <h3 style="margin-bottom: 1rem;">7-Day Forecast</h3>
-                <div class="forecast-container" id="forecastContainer"></div>
+
+            <div id="dashboardPane" class="view-pane">
+                
+                <div id="previewBanner" class="preview-banner">
+                    <div>
+                        <i data-lucide="eye" style="width: 20px; height: 20px;"></i>
+                        <span>Previewing Location</span>
+                    </div>
+                    <button id="addPreviewBtn">
+                        <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+                        Add to Dashboard
+                    </button>
+                </div>
+
+                <div class="hero-weather">
+                    <div class="location-meta">
+                        <h1 id="cityName">---</h1>
+                        <p id="currentDate">---</p>
+                    </div>
+                    <div class="temp-display">
+                        <div class="weather-large-icon" id="mainIcon">
+                            <i data-lucide="cloud-sun"></i>
+                        </div>
+                        <div class="current-temp" id="mainTemp">--<span>°</span></div>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon"><i data-lucide="droplets"></i></div>
+                        <div class="metric-info"><p>Humidity</p><h3 id="humidity">--%</h3></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon"><i data-lucide="wind"></i></div>
+                        <div class="metric-info"><p>Wind Speed</p><h3 id="windSpeed">-- mph</h3></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon"><i data-lucide="eye"></i></div>
+                        <div class="metric-info"><p>Condition</p><h3 id="conditionText" style="font-size: 1.1rem; padding-top:4px;">--</h3></div>
+                    </div>
+                </div>
+
+                <div class="forecast-section">
+                    <h2>7-Day Forecast Horizon</h2>
+                    <div class="forecast-container" id="forecastContainer"></div>
+                </div>
+            </div>
+
+            <div id="settingsPane" class="view-pane">
+                <div class="settings-card">
+                    <h2><i data-lucide="sliders-horizontal"></i> App Preferences</h2>
+                    
+                    <div class="setting-group">
+                        <label>Application Layout Shape & Theme</label>
+                        <div class="segmented-control" id="uiThemeControl">
+                            <button data-val="fluent" class="active">Fluent</button>
+                            <button data-val="classic">Classic</button>
+                            <button data-val="soft">Soft</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label>Temperature Units System</label>
+                        <div class="segmented-control" id="unitControl">
+                            <button data-val="fahrenheit" class="active">Fahrenheit (°F)</button>
+                            <button data-val="celsius">Celsius (°C)</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label>Display Palette Tone Mode</label>
+                        <div class="segmented-control" id="themeControl">
+                            <button data-val="dark" class="active">Deep Space Dark</button>
+                            <button data-val="light">Clean Light</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label>Accent Tone Mapping Style</label>
+                        <div class="segmented-control" id="styleControl">
+                            <button data-val="minimal" class="active">Minimal</button>
+                            <button data-val="full">Full Ambient</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label>Theme Accent Base Pigmentation</label>
+                        <div class="color-palette" id="colorPalette">
+                            <div class="color-swatch active" data-rgb="56, 189, 248" style="background: #38bdf8;" title="Blue Sky"></div>
+                            <div class="color-swatch" data-rgb="168, 85, 247" style="background: #a855f7;" title="Purple Dusk"></div>
+                            <div class="color-swatch" data-rgb="16, 185, 129" style="background: #10b981;" title="Aurora Green"></div>
+                            <div class="color-swatch" data-rgb="244, 63, 94" style="background: #f43f5e;" title="Sunset Rose"></div>
+                            <div class="color-swatch" data-rgb="245, 158, 11" style="background: #f59e0b;" title="Amber Core"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
-    </div>
-
-    <!-- Info Modal -->
-    <div id="infoModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3>Skyline Weather</h3>
-            <p style="margin: 1rem 0;">This application was created by <strong>Gemini</strong>.</p>
-            <button id="closeInfoBtn" style="padding:0.5rem 2rem; cursor:pointer;">Close</button>
+        
+        <div id="infoModal" class="modal-overlay">
+            <div class="modal-content">
+                <h3><i data-lucide="sparkles"></i> Skyline Weather</h3>
+                <p>This application and its underlying logic were created by <strong>Gemini</strong>. A beautiful, glassmorphism-inspired weather forecasting experience.</p>
+                <button id="closeInfoBtn">Awesome</button>
+            </div>
         </div>
+
     </div>
 
     <script>
-        lucide.createIcons();
-        
-        // Location logic
-        navigator.geolocation.getCurrentPosition(pos => {
-            fetchWeather(pos.coords.latitude, pos.coords.longitude, "My Location");
-        });
+        // Merge default settings with local storage securely
+        const defaultSettings = {
+            unit: 'fahrenheit',
+            theme: 'dark',
+            uiTheme: 'fluent',
+            accentStyle: 'minimal',
+            accentRgb: '56, 189, 248'
+        };
+        let appSettings = { ...defaultSettings, ...JSON.parse(localStorage.getItem('weather_settings')) };
 
-        async function fetchWeather(lat, lon, name) {
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,weathercode&timezone=auto`;
-            const res = await fetch(url);
-            const data = await res.json();
+        // Start with empty locations as requested
+        let cities = JSON.parse(localStorage.getItem('weather_cities')) || [];
+        let activeCityIndex = cities.length > 0 ? 0 : null;
+        let previewCity = null;
+        let isViewingSettings = false;
+
+        function getWeatherMapping(code) {
+            const mappings = {
+                0: { text: "Clear Sky", icon: "sun" }, 1: { text: "Mainly Clear", icon: "cloud-sun" },
+                2: { text: "Partly Cloudy", icon: "cloud-sun" }, 3: { text: "Overcast", icon: "cloud" },
+                45: { text: "Foggy", icon: "cloud-fog" }, 48: { text: "Rime Fog", icon: "cloud-fog" },
+                51: { text: "Light Drizzle", icon: "cloud-drizzle" }, 53: { text: "Moderate Drizzle", icon: "cloud-drizzle" },
+                55: { text: "Dense Drizzle", icon: "cloud-drizzle" }, 61: { text: "Slight Rain", icon: "cloud-rain" },
+                63: { text: "Moderate Rain", icon: "cloud-rain" }, 65: { text: "Heavy Rain", icon: "cloud-rain" },
+                71: { text: "Slight Snow", icon: "snowflake" }, 73: { text: "Moderate Snow", icon: "snowflake" },
+                75: { text: "Heavy Snow", icon: "snowflake" }, 80: { text: "Slight Showers", icon: "cloud-hail" },
+                81: { text: "Moderate Showers", icon: "cloud-hail" }, 82: { text: "Violent Showers", icon: "cloud-hail" },
+                95: { text: "Thunderstorm", icon: "cloud-lightning" }
+            };
+            return mappings[code] || { text: "Unknown Conditions", icon: "cloud" };
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            applyLoadedSettings();
+            setupEventBindings();
+            renderSidebar();
             
-            document.getElementById('cityName').innerText = name;
-            const container = document.getElementById('forecastContainer');
-            container.innerHTML = '';
+            // Core load logic: Ask for location if nothing exists
+            if (cities.length === 0) {
+                requestCurrentLocation();
+            } else if (activeCityIndex !== null) {
+                switchViewPane('dashboard');
+                fetchWeather(cities[activeCityIndex]);
+            } else {
+                switchViewPane('empty');
+            }
+        });
+        
+        function requestCurrentLocation() {
+            showLoader(true);
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    try {
+                        // Reverse geocode to get the city name
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                        const data = await res.json();
+                        let cityName = data.address.city || data.address.town || data.address.village || data.address.county || "Current Location";
+                        
+                        const newCity = { name: cityName, lat: lat, lon: lon };
+                        cities.push(newCity);
+                        saveCities();
+                        
+                        activeCityIndex = 0;
+                        renderSidebar();
+                        switchViewPane('dashboard');
+                        fetchWeather(newCity);
+                    } catch (e) {
+                        console.error(e);
+                        showLoader(false);
+                        switchViewPane('empty');
+                    }
+                }, (error) => {
+                    console.log("Geolocation denied or failed", error);
+                    showLoader(false);
+                    switchViewPane('empty');
+                });
+            } else {
+                showLoader(false);
+                switchViewPane('empty');
+            }
+        }
+
+        function switchViewPane(paneName) {
+            document.querySelectorAll('.view-pane').forEach(pane => {
+                pane.classList.remove('active-pane');
+                void pane.offsetWidth; // Force reflow to restart spring animations
+            });
             
-            data.daily.time.forEach((time, i) => {
-                const card = document.createElement('div');
-                card.className = 'forecast-card';
-                card.innerHTML = `<p>${new Date(time).toLocaleDateString('en-US', {weekday: 'short'})}</p><h4>${data.daily.temperature_2m_max[i]}°</h4>`;
-                container.appendChild(card);
+            const btn = document.getElementById('settingsToggleBtn');
+            btn.style.background = "rgba(255,255,255, 0.05)";
+            btn.style.borderColor = "var(--panel-border)";
+
+            if(paneName === 'settings') {
+                document.getElementById('settingsPane').classList.add('active-pane');
+                btn.style.background = "var(--accent)";
+                btn.style.borderColor = "var(--accent)";
+            } else if (paneName === 'dashboard') {
+                document.getElementById('dashboardPane').classList.add('active-pane');
+            } else {
+                document.getElementById('emptyStatePane').classList.add('active-pane');
+            }
+        }
+
+        function applyLoadedSettings() {
+            document.body.setAttribute('data-theme', appSettings.theme);
+            document.body.setAttribute('data-ui-theme', appSettings.uiTheme);
+            document.body.setAttribute('data-accent-style', appSettings.accentStyle);
+            
+            document.documentElement.style.setProperty('--accent-raw', appSettings.accentRgb);
+            document.documentElement.style.setProperty('--accent', `rgb(${appSettings.accentRgb})`);
+
+            syncSegmentedButtons('unitControl', appSettings.unit);
+            syncSegmentedButtons('themeControl', appSettings.theme);
+            syncSegmentedButtons('uiThemeControl', appSettings.uiTheme);
+            syncSegmentedButtons('styleControl', appSettings.accentStyle);
+            
+            document.querySelectorAll('.color-swatch').forEach(swatch => {
+                swatch.classList.toggle('active', swatch.getAttribute('data-rgb') === appSettings.accentRgb);
+            });
+            lucide.createIcons();
+        }
+
+        function syncSegmentedButtons(parentId, selectedVal) {
+            document.querySelectorAll(`#${parentId} button`).forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-val') === selectedVal);
             });
         }
 
-        document.getElementById('cityInput').addEventListener('keypress', async (e) => {
-            if(e.key === 'Enter') {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${e.target.value}&limit=1`);
-                const data = await res.json();
-                if(data[0]) {
-                    document.getElementById('previewBanner').style.display = 'flex';
-                    fetchWeather(data[0].lat, data[0].lon, data[0].display_name.split(',')[0]);
-                }
-            }
-        });
+        function setupEventBindings() {
+            // Main Input Search
+            document.getElementById('cityInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') searchCityPreview(this.value);
+            });
 
-        document.getElementById('infoToggleBtn').addEventListener('click', () => document.getElementById('infoModal').style.display = 'flex');
-        document.getElementById('closeInfoBtn').addEventListener('click', () => document.getElementById('infoModal').style.display = 'none');
+            // Top Buttons
+            document.getElementById('settingsToggleBtn').addEventListener('click', () => {
+                isViewingSettings = !isViewingSettings;
+                if(isViewingSettings) {
+                    switchViewPane('settings');
+                } else if(previewCity) {
+                    switchViewPane('dashboard');
+                } else if(activeCityIndex !== null) {
+                    switchViewPane('dashboard');
+                    fetchWeather(cities[activeCityIndex]);
+                } else {
+                    switchViewPane('empty');
+                }
+            });
+
+            const infoModal = document.getElementById('infoModal');
+            document.getElementById('infoToggleBtn').addEventListener('click', () => {
+                infoModal.classList.add('show');
+            });
+            document.getElementById('closeInfoBtn').addEventListener('click', () => {
+                infoModal.classList.remove('show');
+            });
+
+            // Preview Banner Add
+            document.getElementById('addPreviewBtn').addEventListener('click', () => {
+                if(previewCity) {
+                    const exists = cities.findIndex(c => c.name.toLowerCase() === previewCity.name.toLowerCase() && Math.abs(c.lat - previewCity.lat) < 0.1);
+                    if(exists === -1) {
+                        cities.push(previewCity);
+                        activeCityIndex = cities.length - 1;
+                    } else {
+                        activeCityIndex = exists;
+                    }
+                    saveCities();
+                    
+                    previewCity = null;
+                    document.getElementById('previewBanner').style.display = 'none';
+                    renderSidebar();
+                }
+            });
+
+            // Settings 
+            const bindControl = (id, key) => {
+                document.getElementById(id).addEventListener('click', (e) => {
+                    if(e.target.tagName !== 'BUTTON') return;
+                    appSettings[key] = e.target.getAttribute('data-val');
+                    saveSettings();
+                });
+            };
+            bindControl('unitControl', 'unit');
+            bindControl('themeControl', 'theme');
+            bindControl('uiThemeControl', 'uiTheme');
+            bindControl('styleControl', 'accentStyle');
+
+            document.getElementById('colorPalette').addEventListener('click', (e) => {
+                const swatch = e.target.closest('.color-swatch');
+                if(!swatch) return;
+                appSettings.accentRgb = swatch.getAttribute('data-rgb');
+                saveSettings();
+            });
+        }
+
+        function saveSettings() {
+            localStorage.setItem('weather_settings', JSON.stringify(appSettings));
+            applyLoadedSettings();
+            
+            // Re-render dashboard if unit changed
+            if (!isViewingSettings) {
+                if(previewCity) fetchWeather(previewCity);
+                else if (activeCityIndex !== null) fetchWeather(cities[activeCityIndex]);
+            }
+        }
+        
+        function saveCities() {
+            localStorage.setItem('weather_cities', JSON.stringify(cities));
+        }
+
+        async function fetchWeather(city) {
+            showLoader(true);
+            try {
+                const unitParam = appSettings.unit === 'fahrenheit' ? '&temperature_unit=fahrenheit&windspeed_unit=mph' : '';
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&hourly=relative_humidity_2m&timezone=auto${unitParam}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                updateDashboardUI(city, data);
+            } catch (err) {
+                console.error(err);
+                alert("Failure resolving weather arrays.");
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        function updateDashboardUI(city, data) {
+            const current = data.current_weather;
+            const weatherMeta = getWeatherMapping(current.weathercode);
+            const unitSymbol = appSettings.unit === 'fahrenheit' ? '°F' : '°C';
+            const windSymbol = appSettings.unit === 'fahrenheit' ? ' mph' : ' km/h';
+            
+            let relativeHumidity = "--%";
+            if (data.hourly && data.hourly.relative_humidity_2m) {
+                relativeHumidity = data.hourly.relative_humidity_2m[0] + "%";
+            }
+
+            document.getElementById('cityName').innerText = city.name;
+            document.getElementById('currentDate').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+            document.getElementById('mainTemp').innerHTML = `${Math.round(current.temperature)}<span>${unitSymbol}</span>`;
+            document.getElementById('conditionText').innerText = weatherMeta.text;
+            document.getElementById('humidity').innerText = relativeHumidity;
+            document.getElementById('windSpeed').innerText = current.windspeed + windSymbol;
+
+            document.getElementById('mainIcon').innerHTML = `<i data-lucide="${weatherMeta.icon}"></i>`;
+
+            const forecastContainer = document.getElementById('forecastContainer');
+            forecastContainer.innerHTML = '';
+            
+            for(let i=0; i < data.daily.time.length; i++) {
+                const dayDate = new Date(data.daily.time[i] + 'T00:00:00');
+                const dayName = i === 0 ? "Today" : dayDate.toLocaleDateString('en-US', { weekday: 'short' });
+                const forecastMeta = getWeatherMapping(data.daily.weathercode[i]);
+                const maxTemp = Math.round(data.daily.temperature_2m_max[i]);
+                const minTemp = Math.round(data.daily.temperature_2m_min[i]);
+
+                const card = document.createElement('div');
+                card.className = 'forecast-card';
+                card.style.animationDelay = `${i * 0.08}s`; 
+                card.innerHTML = `
+                    <span class="day">${dayName}</span>
+                    <i data-lucide="${forecastMeta.icon}"></i>
+                    <span class="temp">${maxTemp}° / <span style="color: var(--text-muted); font-weight: normal;">${minTemp}°</span></span>
+                `;
+                forecastContainer.appendChild(card);
+            }
+            lucide.createIcons();
+        }
+
+        async function searchCityPreview(query) {
+            if (!query.trim()) return;
+            showLoader(true);
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    previewCity = {
+                        name: data[0].display_name.split(',')[0],
+                        lat: parseFloat(data[0].lat),
+                        lon: parseFloat(data[0].lon)
+                    };
+                    
+                    isViewingSettings = false; 
+                    activeCityIndex = null; // Clear sidebar active selection
+                    renderSidebar(); 
+                    
+                    switchViewPane('dashboard');
+                    document.getElementById('previewBanner').style.display = 'flex';
+                    fetchWeather(previewCity);
+                    document.getElementById('cityInput').value = '';
+                } else {
+                    alert("Location coordinates not found.");
+                    showLoader(false);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Error calling geocoder API.");
+                showLoader(false);
+            }
+        }
+
+        function renderSidebar() {
+            const list = document.getElementById('cityList');
+            list.innerHTML = '';
+
+            cities.forEach((city, index) => {
+                const li = document.createElement('li');
+                li.className = `city-item ${index === activeCityIndex && !isViewingSettings && !previewCity ? 'active' : ''}`;
+                li.style.animationDelay = `${index * 0.05}s`;
+                
+                li.onclick = (e) => {
+                    if (e.target.closest('.delete-btn')) return;
+                    activeCityIndex = index;
+                    isViewingSettings = false;
+                    previewCity = null;
+                    document.getElementById('previewBanner').style.display = 'none';
+                    switchViewPane('dashboard');
+                    renderSidebar();
+                    fetchWeather(city);
+                };
+
+                li.innerHTML = `
+                    <div class="city-info">
+                        <h4>${city.name}</h4>
+                        <p>Lat: ${city.lat.toFixed(2)} Lon: ${city.lon.toFixed(2)}</p>
+                    </div>
+                    <button class="delete-btn" title="Remove Location">
+                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                    </button>
+                `;
+                list.appendChild(li);
+            });
+
+            lucide.createIcons();
+            
+            document.querySelectorAll('.delete-btn').forEach((btn, idx) => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeCity(idx);
+                });
+            });
+        }
+
+        function removeCity(index) {
+            cities.splice(index, 1);
+            saveCities();
+            
+            if (cities.length === 0) {
+                activeCityIndex = null;
+                if(!isViewingSettings && !previewCity) switchViewPane('empty');
+            } else if (activeCityIndex === index) {
+                activeCityIndex = 0;
+                if(!isViewingSettings && !previewCity) fetchWeather(cities[0]);
+            } else if (activeCityIndex > index) {
+                activeCityIndex--;
+            }
+            renderSidebar();
+        }
+
+        function showLoader(show) {
+            const loader = document.getElementById('loader');
+            const targetPane = isViewingSettings ? document.getElementById('settingsPane') : document.getElementById('dashboardPane');
+            
+            if(show) {
+                loader.style.display = 'block';
+                if(targetPane) targetPane.style.opacity = '0.3';
+            } else {
+                loader.style.display = 'none';
+                if(targetPane) targetPane.style.opacity = '1';
+            }
+        }
     </script>
 </body>
 </html>
