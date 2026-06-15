@@ -1,4 +1,5 @@
 Skyline Weather
+
 A high-performance, weather application designed for speed, clarity, and seamless user experience.
 
 Project Overview
