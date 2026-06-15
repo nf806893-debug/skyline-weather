@@ -288,15 +288,25 @@
         @keyframes staggerSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        @media (max-width: 850px) {
-            .app-container { flex-direction: column; overflow-y: auto; }
-            .sidebar { width: 100%; border-right: none; border-bottom: var(--border-width) solid var(--panel-border); }
-            .main-content { padding: 2rem 1.5rem; }
-            body { overflow: auto; }
-            .hero-weather { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
-            .current-temp { font-size: 4.5rem; }
-            .weather-large-icon i { width: 80px; height: 80px; }
-        }
+@media (max-width: 850px) {
+    .app-container { flex-direction: column; overflow-y: auto; }
+    .sidebar { width: 100%; border-right: none; border-bottom: var(--border-width) solid var(--panel-border); }
+    .main-content { padding: 1.5rem; } /* Reduced padding for mobile */
+    body { overflow: auto; }
+    
+    /* Fix for the cut-off temperature */
+    .hero-weather { 
+        flex-direction: column; 
+        align-items: center; /* Center everything */
+        gap: 0.5rem; 
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    .current-temp { font-size: 4rem; margin: 0; }
+    .location-meta h1 { font-size: 2rem; }
+    .temp-display { gap: 1rem; }
+    .weather-large-icon i { width: 60px; height: 60px; }
+}
     </style>
 </head>
 <body>
